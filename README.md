@@ -7,7 +7,9 @@ A simple Windows Forms application that lets you play a "spot the difference" ga
 1. Make sure you have .NET 8.0 SDK installed
 2. Build the project:
    ```
-   dotnet build
+   dotnet clean
+   >> dotnet build
+   >> dotnet run
    ```
 
 ## Running the Game
@@ -16,8 +18,8 @@ A simple Windows Forms application that lets you play a "spot the difference" ga
 
    - `image1.jpg` - The first image
    - `image2.jpg` - The second image with some differences
-
 2. Run the program:
+
    ```
    dotnet run
    ```
@@ -33,7 +35,7 @@ A simple Windows Forms application that lets you play a "spot the difference" ga
 
 - Both images must be the same size
 - Images should be in JPG format
-- Name them exactly `image1.jpg` and `image2.jpg`
+- Name them exactly `1.jpg` and `1d.jpg`
 - Place them in the same directory as the executable
 
 ## Troubleshooting
