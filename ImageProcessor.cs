@@ -19,9 +19,9 @@ namespace SpotTheDifference
             CvInvoke.CvtColor(image1Mat, gray1, ColorConversion.Bgr2Gray);
             CvInvoke.CvtColor(image2Mat, gray2, ColorConversion.Bgr2Gray);
 
-            // Apply Gaussian blur to reduce noise
-            CvInvoke.GaussianBlur(gray1, gray1, new Size(3, 3), 0);
-            CvInvoke.GaussianBlur(gray2, gray2, new Size(3, 3), 0);
+            // // Apply Gaussian blur to reduce noise
+            // CvInvoke.GaussianBlur(gray1, gray1, new Size(3, 3), 0);
+            // CvInvoke.GaussianBlur(gray2, gray2, new Size(3, 3), 0);
 
             // Calculate absolute difference between images
             Mat diffImage = new Mat();

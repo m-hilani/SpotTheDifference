@@ -1,5 +1,6 @@
 using System.Drawing;
 using Emgu.CV;
+using System.Media;
 
 namespace SpotTheDifference
 {
@@ -9,6 +10,7 @@ namespace SpotTheDifference
         public int TotalDifferences { get; private set; }
         public int FoundDifferences { get; private set; }
         public List<Rectangle> DifferenceRegions { get; private set; }
+        public List<Rectangle> FoundDifferenceRegions { get; private set; }
         
         // Images
         public Mat Image1 { get; private set; }
@@ -16,11 +18,26 @@ namespace SpotTheDifference
         public Mat Image1WithBoundaries { get; private set; }
         public Mat Image2WithBoundaries { get; private set; }
         public Mat BinaryDiffImage { get; private set; }
+
+        // Sound player
+        private SoundPlayer successSound;
         
         public GameState(string firstImagePath, string secondImagePath)
         {
             FoundDifferences = 0;
             DifferenceRegions = new List<Rectangle>();
+            FoundDifferenceRegions = new List<Rectangle>();
+            
+            // Initialize sound player
+            try
+            {
+                successSound = new SoundPlayer("Resources/success.wav");
+                successSound.Load();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Warning: Could not load sound file: {ex.Message}");
+            }
             
             LoadImages(firstImagePath, secondImagePath);
             ProcessImages();
@@ -53,9 +70,9 @@ namespace SpotTheDifference
             Image1WithBoundaries = Image1.Clone();
             Image2WithBoundaries = Image2.Clone();
             
-            // Draw boundaries
-            ImageProcessor.DrawBoundaries(Image1WithBoundaries, DifferenceRegions);
-            ImageProcessor.DrawBoundaries(Image2WithBoundaries, DifferenceRegions);
+            // Draw only found differences
+            ImageProcessor.DrawBoundaries(Image1WithBoundaries, FoundDifferenceRegions);
+            ImageProcessor.DrawBoundaries(Image2WithBoundaries, FoundDifferenceRegions);
         }
         
         public bool CheckForDifference(Point clickPoint)
@@ -74,8 +91,20 @@ namespace SpotTheDifference
                 if (region.Contains(clickPoint))
                 {
                     Console.WriteLine("FOUND DIFFERENCE!");
+                    // Play success sound
+                    try
+                    {
+                        successSound?.Play();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Warning: Could not play sound: {ex.Message}");
+                    }
+
                     // Remove the found difference from the list to prevent double-counting
                     DifferenceRegions.Remove(region);
+                    // Add to found differences list
+                    FoundDifferenceRegions.Add(region);
                     FoundDifferences++;
                     UpdateBoundaryImages();
                     return true;
@@ -96,6 +125,7 @@ namespace SpotTheDifference
             Image1WithBoundaries?.Dispose();
             Image2WithBoundaries?.Dispose();
             BinaryDiffImage?.Dispose();
+            successSound?.Dispose();
         }
     }
 } 

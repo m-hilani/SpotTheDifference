@@ -25,9 +25,21 @@ public partial class Form1 : Form
         // Setup event handlers
         uiManager.PictureBox1.MouseDown += PictureBox_MouseDown;
         uiManager.PictureBox2.MouseDown += PictureBox_MouseDown;
-        uiManager.ShowBoundariesButton.Click += ShowBoundariesButton_Click;
         uiManager.ShowBinaryButton.Click += ShowBinaryButton_Click;
         uiManager.SaveBinaryButton.Click += SaveBinaryButton_Click;
+        
+        // Add Select Images button
+        Button selectImagesButton = new Button
+        {
+            Text = "Select Images",
+            Location = new Point(10, 10),
+            Size = new Size(100, 30)
+        };
+        selectImagesButton.Click += SelectImagesButton_Click;
+        this.Controls.Add(selectImagesButton);
+        
+        // Hide the Show Boundaries button
+        uiManager.ShowBoundariesButton.Visible = false;
         
         // Initialize game state with image paths
         gameState = new GameState("2.jpg", "2d.jpg");
@@ -36,15 +48,35 @@ public partial class Form1 : Form
         uiManager.UpdateDisplay(gameState);
     }
 
-    private void ShowBoundariesButton_Click(object sender, EventArgs e)
+    private void SelectImagesButton_Click(object sender, EventArgs e)
     {
-        uiManager.ShowingBoundaries = !uiManager.ShowingBoundaries;
-        
-        // Turn off binary diff view if boundaries are being shown
-        if (uiManager.ShowingBoundaries)
-            uiManager.ShowingBinaryDiff = false;
-            
-        uiManager.UpdateDisplay(gameState);
+        using (OpenFileDialog openFileDialog = new OpenFileDialog())
+        {
+            openFileDialog.Filter = "Image Files|*.jpg;*.jpeg;*.png;*.bmp";
+            openFileDialog.Title = "Select Original Image";
+            openFileDialog.Multiselect = false;
+
+            if (openFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                string originalImagePath = openFileDialog.FileName;
+                
+                // Open second dialog for modified image
+                openFileDialog.Title = "Select Modified Image";
+                if (openFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    string modifiedImagePath = openFileDialog.FileName;
+                    
+                    // Dispose old game state
+                    gameState?.Dispose();
+                    
+                    // Create new game state with selected images
+                    gameState = new GameState(originalImagePath, modifiedImagePath);
+                    
+                    // Update display
+                    uiManager.UpdateDisplay(gameState);
+                }
+            }
+        }
     }
 
     private void ShowBinaryButton_Click(object sender, EventArgs e)
@@ -75,13 +107,11 @@ public partial class Form1 : Form
         // Check if clicked on a difference
         if (gameState.CheckForDifference(imagePoint))
         {
-            MessageBox.Show($"You found a difference! {gameState.FoundDifferences} out of {gameState.TotalDifferences} found.");
+            // Show boundaries for found differences
+            uiManager.ShowingBoundaries = true;
+            uiManager.UpdateDisplay(gameState);
             
-            // Update the display if showing boundaries
-            if (uiManager.ShowingBoundaries)
-            {
-                uiManager.UpdateDisplay(gameState);
-            }
+            MessageBox.Show($"You found a difference! {gameState.FoundDifferences} out of {gameState.TotalDifferences} found.");
             
             // Check if all differences have been found
             if (gameState.AllDifferencesFound())
