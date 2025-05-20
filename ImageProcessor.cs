@@ -147,7 +147,7 @@ namespace SpotTheDifference
             foreach (Rectangle rect in differenceRegions)
             {
                 // Draw red rectangle (BGR format in OpenCV)
-                CvInvoke.Rectangle(outputImage, rect, new MCvScalar(0, 0, 255), 2);
+                CvInvoke.Rectangle(outputImage, rect, new MCvScalar(0, 255, 0), 2);
                 
                 // Add number labels to the rectangles
                 Point textPoint = new Point(rect.X, rect.Y - 10);

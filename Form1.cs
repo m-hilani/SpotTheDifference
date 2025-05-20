@@ -120,6 +120,23 @@ public partial class Form1 : Form
                 this.Close();
             }
         }
+        else
+        {
+            // Set ShowingBoundaries to true to display the wrong attempt markers
+            uiManager.ShowingBoundaries = true;
+            uiManager.UpdateDisplay(gameState);
+            
+            // Wrong attempt
+            if (gameState.HasExceededWrongAttempts())
+            {
+                MessageBox.Show($"Game Over! You've exceeded the maximum number of wrong attempts ({gameState.MaxWrongAttempts}).\nYou found {gameState.FoundDifferences} out of {gameState.TotalDifferences} differences.");
+                this.Close();
+            }
+            else
+            {
+                MessageBox.Show($"Wrong attempt! You have {gameState.MaxWrongAttempts - gameState.WrongAttempts} wrong attempts remaining.");
+            }
+        }
     }
 
     protected override void OnFormClosing(FormClosingEventArgs e)

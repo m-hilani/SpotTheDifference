@@ -1,6 +1,7 @@
 using System.Drawing;
 using Emgu.CV;
 using System.Media;
+using Emgu.CV.Structure;
 
 namespace SpotTheDifference
 {
@@ -9,8 +10,11 @@ namespace SpotTheDifference
         // Game state properties
         public int TotalDifferences { get; private set; }
         public int FoundDifferences { get; private set; }
+        public int WrongAttempts { get; private set; }
+        public int MaxWrongAttempts { get; private set; }
         public List<Rectangle> DifferenceRegions { get; private set; }
         public List<Rectangle> FoundDifferenceRegions { get; private set; }
+        public List<Rectangle> WrongAttemptRegions { get; private set; }
         
         // Images
         public Mat Image1 { get; private set; }
@@ -19,20 +23,26 @@ namespace SpotTheDifference
         public Mat Image2WithBoundaries { get; private set; }
         public Mat BinaryDiffImage { get; private set; }
 
-        // Sound player
+        // Sound players
         private SoundPlayer successSound;
+        private SoundPlayer wrongSound;
         
         public GameState(string firstImagePath, string secondImagePath)
         {
             FoundDifferences = 0;
+            WrongAttempts = 0;
+            MaxWrongAttempts = 5; // Set maximum wrong attempts
             DifferenceRegions = new List<Rectangle>();
             FoundDifferenceRegions = new List<Rectangle>();
+            WrongAttemptRegions = new List<Rectangle>();
             
-            // Initialize sound player
+            // Initialize sound players
             try
             {
                 successSound = new SoundPlayer("Resources/success.wav");
                 successSound.Load();
+                wrongSound = new SoundPlayer("Resources/wrong.wav");
+                wrongSound.Load();
             }
             catch (Exception ex)
             {
@@ -70,9 +80,26 @@ namespace SpotTheDifference
             Image1WithBoundaries = Image1.Clone();
             Image2WithBoundaries = Image2.Clone();
             
-            // Draw only found differences
+            // Draw found differences
             ImageProcessor.DrawBoundaries(Image1WithBoundaries, FoundDifferenceRegions);
             ImageProcessor.DrawBoundaries(Image2WithBoundaries, FoundDifferenceRegions);
+
+            // Draw wrong attempt regions with a different color
+            foreach (var region in WrongAttemptRegions)
+            {
+                // Create a smaller rectangle for wrong attempts
+                int padding = 10;
+                Rectangle smallerRegion = new Rectangle(
+                    region.X + padding,
+                    region.Y + padding,
+                    region.Width - (padding * 2),
+                    region.Height - (padding * 2)
+                );
+                
+                // Draw wrong attempt regions in red
+                CvInvoke.Rectangle(Image1WithBoundaries, smallerRegion, new Bgr(0, 0, 255).MCvScalar, 2);
+                CvInvoke.Rectangle(Image2WithBoundaries, smallerRegion, new Bgr(0, 0, 255).MCvScalar, 2);
+            }
         }
         
         public bool CheckForDifference(Point clickPoint)
@@ -110,7 +137,29 @@ namespace SpotTheDifference
                     return true;
                 }
             }
+
+            // Wrong attempt
+            WrongAttempts++;
+            // Play wrong sound
+            try
+            {
+                wrongSound?.Play();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Warning: Could not play sound: {ex.Message}");
+            }
+
+            // Add wrong attempt region
+            WrongAttemptRegions.Add(new Rectangle(clickPoint.X - 20, clickPoint.Y - 20, 40, 40));
+            UpdateBoundaryImages();
+
             return false;
+        }
+        
+        public bool HasExceededWrongAttempts()
+        {
+            return WrongAttempts >= MaxWrongAttempts;
         }
         
         public bool AllDifferencesFound()
@@ -126,6 +175,7 @@ namespace SpotTheDifference
             Image2WithBoundaries?.Dispose();
             BinaryDiffImage?.Dispose();
             successSound?.Dispose();
+            wrongSound?.Dispose();
         }
     }
 } 
